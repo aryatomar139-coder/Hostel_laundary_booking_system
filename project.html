@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Hostel Laundry Slot Booking</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: rgb(87, 87, 200);
+      margin: 0;
+      padding: 15px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #dbe2e4;
+    }
+
+    /* Boxes that hold each section */
+    .box {
+      background-color: rgb(73, 174, 174);
+      border: 1px solid #88dfbc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    /* Summary cards in one row */
+    .summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .summary div {
+      flex: 1;
+      min-width: 90px;
+      text-align: center;
+      background-color: #e3f1f4;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #f26b1d;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* One booking card */
+    .booking {
+      border: 1px solid #cccccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    .booking button {
+      width: auto;
+      padding: 5px 10px;
+      margin: 5px 5px 0 0;
+    }
+
+    /* Message after booking */
+    #message {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .green { color: green; }
+    .red   { color: red; }
+  </style>
+</head>
+
+<body>
+
+  <h1>Hostel Laundry Slot Booking - LPU</h1>
+
+  <!-- 1. DASHBOARD -->
+  <div class="box">
+    <h3>Summary</h3>
+    <div class="summary">
+      <div>Total<br><b id="total">0</b></div>
+      <div>Booked<br><b id="booked">0</b></div>
+      <div>In Progress<br><b id="progress">0</b></div>
+      <div>Completed<br><b id="done">0</b></div>
+    </div>
+  </div>
+
+  <!-- 2. BOOKING FORM -->
+  <div class="box">
+    <h3>Book a Slot</h3>
+
+    <p id="message"></p>
+
+    <label>Student Name</label>
+    <input type="text" id="name" placeholder="Enter your name">
+
+    <label>Registration Number (8 digits)</label>
+    <input type="text" id="reg" placeholder="Enter Registration NO.">
+
+    <label>Hostel Block</label>
+    <select id="block">
+      <option>BH-1</option>
+      <option>BH-2</option>
+      <option>GH-1</option>
+      <option>GH-2</option>
+    </select>
+
+    <label>Room Number</label>
+    <input type="text" id="room" placeholder="Enter your Room Number">
+
+    <label>Date</label>
+    <input type="date" id="date">
+
+    <label>Time Slot</label>
+    <select id="slot">
+      <option>6 AM - 8 AM</option>
+      <option>8 AM - 10 AM</option>
+      <option>10 AM - 12 PM</option>
+      <option>4 PM - 6 PM</option>
+      <option>6 PM - 8 PM</option>
+    </select>
+
+    <label>Machine</label>
+    <select id="machine">
+      <option>Washer 1</option>
+      <option>Washer 2</option>
+      <option>Washer 3</option>
+    </select>
+
+    <button onclick="addBooking()">Book Slot</button>
+  </div>
+
+  <!-- 3. SEARCH, FILTER AND LIST -->
+  <div class="box">
+    <h3>All Bookings</h3>
+
+    <input type="text" id="search" placeholder="Search by name" onkeyup="showBookings()">
+
+    <select id="filter" onchange="showBookings()">
+      <option value="All">All Status</option>
+      <option>Booked</option>
+      <option>In Progress</option>
+      <option>Completed</option>
+    </select>
+
+    <div id="list"></div>
+  </div>
+
+
+  <script>
+    // This list stores all bookings
+    var bookings = [];
+
+
+    // STEP 1: Show a message (green = success, red = error)
+    function showMessage(text, color) {
+      var msg = document.getElementById("message");
+      msg.innerHTML = text;
+      msg.className = color;
+    }
+
+
+    // STEP 2: Add a new booking
+    function addBooking() {
+
+      // Read values from the form
+      var name    = document.getElementById("name").value;
+      var reg     = document.getElementById("reg").value;
+      var block   = document.getElementById("block").value;
+      var room    = document.getElementById("room").value;
+      var date    = document.getElementById("date").value;
+      var slot    = document.getElementById("slot").value;
+      var machine = document.getElementById("machine").value;
+
+      // Validation: check the inputs
+      if (name == "") {
+        showMessage("Please enter the student name.", "red");
+        return;
+      }
+
+      if (reg.length != 8 || isNaN(reg)) {
+        showMessage("Registration number must be exactly 8 digits.", "red");
+        return;
+      }
+
+      if (room == "") {
+        showMessage("Please enter the room number.", "red");
+        return;
+      }
+
+      if (date == "") {
+        showMessage("Please choose a date.", "red");
+        return;
+      }
+
+      // Check if the same machine is already booked at that time
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].date == date &&
+            bookings[i].slot == slot &&
+            bookings[i].machine == machine) {
+          showMessage("This machine is already booked for that slot.", "red");
+          return;
+        }
+      }
+
+      // Save the booking
+      var newBooking = {
+        name: name,
+        reg: reg,
+        block: block,
+        room: room,
+        date: date,
+        slot: slot,
+        machine: machine,
+        status: "Booked"
+      };
+
+      bookings.push(newBooking);
+
+      // Show success message and clear the form
+      showMessage("Slot booked successfully!", "green");
+      document.getElementById("name").value = "";
+      document.getElementById("reg").value  = "";
+      document.getElementById("room").value = "";
+
+      showBookings();
+    }
+
+
+    // STEP 3: Show bookings on the page (with search and filter)
+    function showBookings() {
+
+      var searchText   = document.getElementById("search").value.toLowerCase();
+      var filterStatus = document.getElementById("filter").value;
+      var html = "";
+
+      for (var i = 0; i < bookings.length; i++) {
+        var b = bookings[i];
+
+        // Skip bookings that do not match the search
+        if (b.name.toLowerCase().indexOf(searchText) == -1) {
+          continue;
+        }
+
+        // Skip bookings that do not match the filter
+        if (filterStatus != "All" && b.status != filterStatus) {
+          continue;
+        }
+
+        // Build one booking card
+        html += "<div class='booking'>";
+        html += "<b>" + b.name + "</b> (" + b.reg + ")<br>";
+        html += b.block + ", Room " + b.room + "<br>";
+        html += b.date + " | " + b.slot + " | " + b.machine + "<br>";
+        html += "Status: <b>" + b.status + "</b><br>";
+
+        // Buttons change depending on the status
+        if (b.status == "Booked") {
+          html += "<button onclick='changeStatus(" + i + ", \"In Progress\")'>Start Wash</button>";
+        }
+        if (b.status == "In Progress") {
+          html += "<button onclick='changeStatus(" + i + ", \"Completed\")'>Mark Completed</button>";
+        }
+        html += "<button onclick='deleteBooking(" + i + ")'>Delete</button>";
+        html += "</div>";
+      }
+
+      // If nothing to show
+      if (html == "") {
+        html = "No bookings found.";
+      }
+
+      document.getElementById("list").innerHTML = html;
+      updateSummary();
+    }
+
+
+    // STEP 4: Change the status of a booking
+    function changeStatus(index, newStatus) {
+      bookings[index].status = newStatus;
+      showBookings();
+    }
+
+
+    // STEP 5: Delete a booking
+    function deleteBooking(index) {
+      bookings.splice(index, 1);
+      showBookings();
+    }
+
+
+    // STEP 6: Update the summary numbers
+    function updateSummary() {
+      var booked = 0;
+      var progress = 0;
+      var done = 0;
+
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].status == "Booked")      booked++;
+        if (bookings[i].status == "In Progress") progress++;
+        if (bookings[i].status == "Completed")   done++;
+      }
+
+      document.getElementById("total").innerHTML    = bookings.length;
+      document.getElementById("booked").innerHTML   = booked;
+      document.getElementById("progress").innerHTML = progress;
+      document.getElementById("done").innerHTML     = done;
+    }
+
+
+    // Show the list when the page first opens
+    showBookings();
+  </script>
+
+</body>
+</html>
+ 
